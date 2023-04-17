@@ -1,0 +1,232 @@
+{{template "base" .}}
+
+{{define "content" }}
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <h1 class="mt-5">Test microservices</h1>
+      <hr />
+      <button class="bnt btn-outline-secondary" onclick="brokerClickHandler()">
+        Test broker
+      </button>
+      <button class="bnt btn-outline-secondary" onclick="authClickHandler()">
+        Test auth
+      </button>
+      <button class="bnt btn-outline-secondary" onclick="loggerClickHandler()">
+        Test logger
+      </button>
+      <button class="bnt btn-outline-secondary" onclick="loggerGRPCClickHandler()">
+        Test logger gRPC
+      </button>
+      <button class="bnt btn-outline-secondary" onclick="mailClickHandler()">
+        Test mail
+      </button>
+      <div
+        id="output"
+        class="mt-5"
+        style="outline: 1px solid silver; padding: 2em"
+      >
+        <span class="text-muted">Output shows here...</span>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <h4 class="mt-5">Sent</h4>
+      <div class="mt-1" style="outline: 1px solid silver; padding: 2em">
+        <pre
+          id="payload"
+        ><span class="text-muted">Nothing sent yet...</span></pre>
+      </div>
+    </div>
+    <div class="col">
+      <h4 class="mt-5">Received</h4>
+      <div class="mt-1" style="outline: 1px solid silver; padding: 2em">
+        <pre
+          id="received"
+        ><span class="text-muted">Nothing received yet...</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+{{ end }}
+
+{{define "js"}}
+<script>
+  const output = document.getElementById('output');
+  const sent = document.getElementById('payload');
+  const received = document.getElementById('received');
+
+  async function brokerClickHandler(event) {
+    console.log(event);
+
+    const fetchConfiguration = {
+      method: 'POST',
+    };
+
+    try {
+      const data = await fetch('http://localhost:8080/', fetchConfiguration);
+      const parsedDate = await data.json();
+      if (parsedDate.error) {
+        console.log(parsedDate.message);
+        return;
+      }
+      sent.innerText = 'Empty post request';
+      received.innerText = JSON.stringify(parsedDate, undefined, 4);
+      output.innerHTML += `<br><strong>Response from broker service: ${parsedDate.message}`;
+    } catch (error) {
+      output.innerHTML += `<br><br>Error: ${error}`;
+    }
+  }
+
+  async function authClickHandler(event) {
+    console.log(event);
+
+    const payload = {
+      action: 'auth',
+      auth: {
+        email: 'admin@example.com',
+        password: 'verysecret',
+      },
+    };
+    const headers = new Headers();
+    headers.append('Content-Type', 'application/json');
+
+    const fetchConfiguration = {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers,
+    };
+
+    try {
+      const data = await fetch(
+        'http://localhost:8080/handle',
+        fetchConfiguration
+      );
+      const parsedDate = await data.json();
+      if (parsedDate.error) {
+        output.innerHTML += `<br><strong>Error:</strong> ${parsedDate.message}`;
+        console.log(parsedDate.message);
+      }
+      sent.innerText = JSON.stringify(payload, undefined, 4);
+      received.innerText = JSON.stringify(parsedDate, undefined, 4);
+      output.innerHTML += `<br><strong>Response from auth service: ${parsedDate.message}`;
+    } catch (error) {
+      output.innerHTML += `<br><br>Error: ${error}`;
+    }
+  }
+
+  async function loggerClickHandler(event) {
+    console.log(event);
+
+    const payload = {
+      action: 'log',
+      log: {
+        name: 'event',
+        data: 'some kind of data',
+      },
+    };
+    const headers = new Headers();
+    headers.append('Content-Type', 'application/json');
+
+    const fetchConfiguration = {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers,
+    };
+
+    try {
+      const data = await fetch(
+        'http://localhost:8080/handle',
+        fetchConfiguration
+      );
+      const parsedDate = await data.json();
+      if (parsedDate.error) {
+        output.innerHTML += `<br><strong>Error:</strong> ${parsedDate.message}`;
+        console.log(parsedDate.message);
+      }
+      sent.innerText = JSON.stringify(payload, undefined, 4);
+      received.innerText = JSON.stringify(parsedDate, undefined, 4);
+      output.innerHTML += `<br><strong>Response from logger service: ${parsedDate.message}`;
+    } catch (error) {
+      output.innerHTML += `<br><br>Error: ${error}`;
+    }
+  }
+
+  async function loggerGRPCClickHandler(event) {
+    console.log(event);
+
+    const payload = {
+      action: 'log',
+      log: {
+        name: 'event',
+        data: 'some kind gRPC of data',
+      },
+    };
+    const headers = new Headers();
+    headers.append('Content-Type', 'application/json');
+
+    const fetchConfiguration = {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers,
+    };
+
+    try {
+      const data = await fetch(
+        'http://localhost:8080/log-grpc',
+        fetchConfiguration
+      );
+      const parsedDate = await data.json();
+      if (parsedDate.error) {
+        output.innerHTML += `<br><strong>Error:</strong> ${parsedDate.message}`;
+        console.log(parsedDate.message);
+      }
+      sent.innerText = JSON.stringify(payload, undefined, 4);
+      received.innerText = JSON.stringify(parsedDate, undefined, 4);
+      output.innerHTML += `<br><strong>Response from logger service: ${parsedDate.message}`;
+    } catch (error) {
+      output.innerHTML += `<br><br>Error: ${error}`;
+    }
+  }
+
+  async function mailClickHandler(event) {
+    console.log(event);
+
+    const payload = {
+      action: 'mail',
+      mail: {
+        from: 'camiloa17@gmail.com',
+        to: 'leticiaserrano@gmail.com',
+        subject: 'test',
+        message: 'Hello world'
+      },
+    };
+    const headers = new Headers();
+    headers.append('Content-Type', 'application/json');
+
+    const fetchConfiguration = {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers,
+    };
+
+    try {
+      const data = await fetch(
+        'http://localhost:8080/handle',
+        fetchConfiguration
+      );
+      const parsedDate = await data.json();
+      if (parsedDate.error) {
+        output.innerHTML += `<br><strong>Error:</strong> ${parsedDate.message}`;
+        console.log(parsedDate.message);
+      }
+      sent.innerText = JSON.stringify(payload, undefined, 4);
+      received.innerText = JSON.stringify(parsedDate, undefined, 4);
+      output.innerHTML += `<br><strong>Response from mail service: ${parsedDate.message}`;
+    } catch (error) {
+      output.innerHTML += `<br><br>Error: ${error}`;
+    }
+  }
+</script>
+{{ end }}

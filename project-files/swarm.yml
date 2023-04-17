@@ -1,0 +1,89 @@
+version: '3'
+
+#use same name as the docker compose so we don't have to change urls
+services:
+  broker-service:
+    image: camiloa17/broker-service:1.0.0
+    ports:
+      - "8080:80"
+    deploy:
+      mode: replicated
+      replicas: 1
+    
+  listener-service:
+    image: camiloa17/listener-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+  
+  authentication-service:
+    image: camiloa17/authentication-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      DBDSN: "host=postgres port=5432 user=postgres password=password dbname=users sslmode=disable timezone=UTC connect_timeout=5"
+
+  logger-service:
+    image: camiloa17/logger-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  mail-service:
+    image: camiloa17/mail-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      MAIL_DOMAIN: localhost
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      MAIL_ENCRYPTION: none
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      FROM_NAME: "Camilo Dominguez"
+      FROM_ADDRESS: "camiloa17@gmail.com"
+  
+  # need to add a volume for production
+  rabbitmq:
+    image: 'rabbitmq:3.11-alpine'
+    deploy:
+      mode: global
+
+  mailhog:
+    image: 'mailhog/mailhog:latest'
+    ports:
+      - "8025:8025"
+    deploy:
+      mode: global
+  
+  # dont do if you want, it is advisable to have its own instance for DBs outside docker
+  # make the swarm connect to that managed DB service
+  mongo:
+    image: 'mongo'
+    # dont expose ports in production, put a firewall to it
+    ports:
+      - "27017:27017"
+    deploy:
+      mode: global
+    environment:
+      MONGO_INITDB_DATABASE: logs
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - ./db-data/mongo/:/data/db
+  
+  postgres:
+      image: 'postgres:15.2'
+      ports:
+        - "5432:5432"
+      deploy:
+        mode: global
+      environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: password
+        POSTGRES_DB: users
+      volumes:
+        - ./db-data/postgres/:/var/lib/postgresql/data/
+    
